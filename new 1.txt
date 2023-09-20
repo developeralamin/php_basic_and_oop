@@ -1,0 +1,86 @@
+SELECT 
+    products.name,
+    SUM(CASE WHEN stock_adjustments.type = 'stock in' THEN purchase_items.quantity
+             WHEN stock_adjustments.type = 'stock out' THEN -sale_items.quantity
+             ELSE 0 END) as net_stock_change
+FROM `products`
+LEFT JOIN `purchase_items` on products.id = purchase_items.product_id
+LEFT JOIN `sale_items` ON products.id = sale_items.product_id 
+LEFT JOIN `stock_adjustments` ON products.id = stock_adjustments.product_id 
+WHERE stock_adjustments.type IN ('stock in', 'stock out')
+GROUP BY products.id;
+
+
+
+SELECT purchase_items.quantity-sale_items.quantity as stock , name FROM `products`
+INNER JOIN `purchase_items` on products.id = purchase_items.product_id
+INNER JOIN `sale_items` ON products.id = sale_items.product_id 
+GROUP BY products.id;
+
+
+
+SELECT 
+	name,
+	SUM(purchase_items.quantity) as purchase, 
+    SUM(sale_items.quantity) as sale
+FROM `products`
+INNER JOIN `purchase_items` on products.id = purchase_items.product_id
+INNER JOIN `sale_items` ON products.id = sale_items.product_id 
+GROUP BY products.id;
+
+
+
+SELECT 
+	name,
+	SUM(purchase_items.quantity) as purchase, 
+    SUM(sale_items.quantity) as sale
+FROM `products`
+INNER JOIN `purchase_items` on products.id = purchase_items.product_id
+INNER JOIN `sale_items` ON products.id = sale_items.product_id 
+INNER JOIN `stock_adjustments` ON products.id = stock_adjustments.product_id 
+WHERE stock_adjustments.type IN ('stock in', 'stock out')
+GROUP BY products.id;
+
+
+
+
+
+SELECT 
+    products.name,
+    SUM(CASE WHEN stock_adjustments.type = 'Stock In' THEN +purchase_items.quantity
+             WHEN stock_adjustments.type = 'Stock Out' THEN -sale_items.quantity
+             ELSE 0 END) as stock
+FROM `products`
+LEFT JOIN `purchase_items` on products.id = purchase_items.product_id
+LEFT JOIN `sale_items` ON products.id = sale_items.product_id 
+LEFT JOIN `stock_adjustments` ON products.id = stock_adjustments.product_id 
+WHERE stock_adjustments.type IN ('Stock In', 'Stock Out')
+GROUP BY products.id;
+
+
+
+
+
+SELECT 
+    products.name,
+    SUM(purchase_items.quantity) as purchase, 
+    SUM(sale_items.quantity) as sale,
+    SUM(net_stock_change) as stock_sdjust
+FROM `products`
+LEFT JOIN `purchase_items` on products.id = purchase_items.product_id
+LEFT JOIN `sale_items` ON products.id = sale_items.product_id 
+LEFT JOIN (
+    SELECT 
+        product_id,
+        SUM(CASE WHEN type = 'Stock In' THEN quantity
+                 WHEN type = 'Stock Out' THEN -quantity
+                 ELSE 0 END) as net_stock_change
+    FROM `stock_adjustments`
+    WHERE type IN ('Stock In', 'Stock Out')
+    GROUP BY product_id
+) AS stock_changes ON products.id = stock_changes.product_id
+GROUP BY products.id;
+
+
+
+
